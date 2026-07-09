@@ -1,0 +1,44 @@
+{
+    "name": "@onlook/attribution",
+    "description": "Ownership ledger tracking whether Forge or the user last touched a given element",
+    "version": "0.0.0",
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/onlook-dev/onlook.git"
+    },
+    "type": "module",
+    "main": "src/index.ts",
+    "scripts": {
+        "clean": "rm -rf node_modules",
+        "lint": "eslint . --max-warnings 0",
+        "format": "eslint --fix .",
+        "typecheck": "tsc --noEmit",
+        "test": "bun test"
+    },
+    "keywords": [
+        "onlook",
+        "attribution"
+    ],
+    "author": {
+        "name": "Onlook",
+        "email": "contact@onlook.com"
+    },
+    "license": "Apache-2.0",
+    "homepage": "https://onlook.com",
+    "exports": {
+        ".": "./src/index.ts",
+        "./*": "./src/*/index.ts"
+    },
+    "devDependencies": {
+        "@onlook/eslint": "*",
+        "@onlook/typescript": "*",
+        "@types/bun": "^1.2.4",
+        "eslint": "^9.0.0",
+        "typescript": "^5.5.4"
+    },
+    "dependencies": {
+        "@onlook/models": "*",
+        "@onlook/parser": "*"
+    }
+}
