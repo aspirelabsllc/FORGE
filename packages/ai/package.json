@@ -33,7 +33,7 @@
         "typescript": "^5.5.4"
     },
     "dependencies": {
-        "@ai-sdk/anthropic": "^2.0.85",
+        "@ai-sdk/anthropic": "^4.0.11",
         "@mendable/firecrawl-js": "^1.29.1",
         "ai": "5.0.60",
         "exa-js": "^1.8.26",
