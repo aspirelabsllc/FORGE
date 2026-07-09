@@ -10,6 +10,21 @@ ENV STANDALONE_BUILD=true
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
+# Build-time variables. Railway supplies service variables as Docker build args,
+# but a Dockerfile only exposes them to RUN steps that declare them as ARG.
+# NEXT_PUBLIC_* MUST be present during `next build` because Next.js inlines them
+# into the client bundle (setting them only at runtime would not reach the browser).
+# Server-only secrets are injected at runtime, so env validation is skipped for the
+# build via SKIP_ENV_VALIDATION.
+ARG SKIP_ENV_VALIDATION
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_SITE_URL
+ENV SKIP_ENV_VALIDATION=$SKIP_ENV_VALIDATION \
+    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+
 # Copy everything (monorepo structure)
 COPY . .
 
