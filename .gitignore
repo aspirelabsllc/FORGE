@@ -51,3 +51,7 @@ mise.toml
 
 # Temporary files
 .tmp/
+
+# Playwright / local verification artifacts
+.playwright-mcp/
+forge-landing.png
