@@ -4,12 +4,12 @@ import { motion } from 'motion/react';
 
 import { vujahdayScript } from '../../fonts';
 import { ForgeAuthCard } from './forge-auth-card';
-import { ForgeBackground } from './forge-background';
+import { UnicornBackground } from './unicorn-background';
 
 export function Hero() {
     return (
         <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
-            <ForgeBackground />
+            <UnicornBackground />
 
             <div className="relative z-20 mx-auto flex w-full max-w-6xl flex-col items-center gap-12 px-6 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
                 {/* Statement */}
