@@ -1,6 +1,6 @@
 'use client';
 
-import { LocalForageKeys } from '@/utils/constants';
+import { LocalForageKeys, Routes } from '@/utils/constants';
 import { sanitizeReturnUrl } from '@/utils/url';
 import localforage from 'localforage';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,8 @@ export default function AuthRedirect() {
             await localforage.removeItem(LocalForageKeys.RETURN_URL);
 
             const sanitizedUrl = sanitizeReturnUrl(returnUrl);
-            router.replace(sanitizedUrl);
+            // Land in the app, not back on the public home / sign-up gate.
+            router.replace(sanitizedUrl === Routes.HOME ? Routes.PROJECTS : sanitizedUrl);
         };
         handleRedirect();
     }, [router]);
