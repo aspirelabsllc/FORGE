@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 export default async function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
     const supabase = await createClient();
     const {
-        data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
         const headersList = await headers();
         const pathname = headersList.get('x-pathname') || Routes.PROJECTS;
         redirect(`${Routes.LOGIN}?${getReturnUrlQueryParam(pathname)}`);

@@ -9,9 +9,9 @@ import { WebsiteLayout } from '../_components/website-layout';
 export default async function LoginPage() {
     const supabase = await createClient();
     const {
-        data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
         redirect(Routes.PROJECTS);
     }
 

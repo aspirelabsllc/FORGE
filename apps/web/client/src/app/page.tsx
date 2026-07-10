@@ -8,9 +8,9 @@ export default async function Main() {
     // Authenticated users go to the app; the sign-up gate is for logged-out visitors.
     const supabase = await createClient();
     const {
-        data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
         redirect(Routes.PROJECTS);
     }
 

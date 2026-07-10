@@ -15,9 +15,9 @@ export async function login(provider: SignInMethod.GITHUB | SignInMethod.GOOGLE)
 
     // If already session, redirect
     const {
-        data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
         redirect(Routes.AUTH_REDIRECT);
     }
 
@@ -43,9 +43,9 @@ export async function devLogin() {
     }
 
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (session) {
+    if (user) {
         redirect(Routes.AUTH_REDIRECT);
     }
 
