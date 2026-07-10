@@ -200,6 +200,25 @@ export class CodesandboxProvider extends Provider {
         };
     }
 
+    /**
+     * Mint a short-lived host (preview) token and return the preview URL signed
+     * with it. Loading the iframe from this URL authenticates the embed, so
+     * CodeSandbox skips the cross-origin "trust this preview" phishing prompt
+     * that otherwise blocks previews on the free plan. Requires the API key to
+     * have the "Preview Token Manage" scope.
+     */
+    static async createPreviewToken(
+        sandboxId: string,
+        port: number,
+    ): Promise<{ url: string }> {
+        const sdk = new CodeSandbox();
+        const hostToken = await sdk.hosts.createToken(sandboxId, {
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        });
+        const url = sdk.hosts.getUrl({ sandboxId, token: hostToken.token }, port);
+        return { url };
+    }
+
     async pauseProject(input: PauseProjectInput): Promise<PauseProjectOutput> {
         if (this.sandbox && this.options.sandboxId) {
             const sdk = new CodeSandbox();

@@ -1,5 +1,6 @@
 import { useEditorEngine } from '@/components/store/editor';
 import { PreloadScriptState } from '@/components/store/editor/sandbox';
+import { api } from '@/trpc/react';
 import { type Frame } from '@onlook/models';
 import { Icons } from '@onlook/ui/icons';
 import { colors } from '@onlook/ui/tokens';
@@ -58,6 +59,22 @@ export const FrameView = observer(({ frame, isInDragSelection = false }: { frame
 
     const isSelected = editorEngine.frames.isSelected(frame.id);
     const branchData = editorEngine.branches.getBranchDataById(frame.branchId);
+
+    // Load the preview through a host-token-signed URL so CodeSandbox doesn't
+    // show its cross-origin "trust this preview" prompt (which otherwise loops
+    // the frame and blocks the penpal connection). Cached per sandbox; falls
+    // back to the bare frame.url until the token resolves.
+    const sandboxId = branchData?.branch?.sandbox?.id;
+    const { data: preview } = api.sandbox.previewToken.useQuery(
+        { sandboxId: sandboxId ?? '' },
+        {
+            enabled: !!sandboxId,
+            staleTime: 20 * 60 * 1000,
+            refetchOnWindowFocus: false,
+            retry: 1,
+        },
+    );
+
     const preloadScriptReady = branchData?.sandbox?.preloadScriptState === PreloadScriptState.INJECTED;
     const isFrameReady = preloadScriptReady && !(isConnecting && !hasTimedOut);
 
@@ -97,6 +114,7 @@ export const FrameView = observer(({ frame, isInDragSelection = false }: { frame
                 <FrameComponent
                     key={reloadKey}
                     frame={frame}
+                    srcOverride={preview?.url}
                     reloadIframe={immediateReload}
                     onConnectionFailed={handleConnectionFailed}
                     onConnectionSuccess={handleConnectionSuccess}

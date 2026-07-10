@@ -58,6 +58,8 @@ interface FrameViewProps extends IframeHTMLAttributes<HTMLIFrameElement> {
     onConnectionSuccess: () => void;
     penpalTimeoutMs?: number;
     isInDragSelection?: boolean;
+    /** Overrides the iframe src (e.g. a preview-token-signed URL). Falls back to frame.url. */
+    srcOverride?: string;
 }
 
 export const FrameComponent = observer(
@@ -70,6 +72,7 @@ export const FrameComponent = observer(
                 onConnectionSuccess,
                 penpalTimeoutMs = 5000,
                 isInDragSelection = false,
+                srcOverride,
                 ...restProps
             },
             ref,
@@ -317,7 +320,7 @@ export const FrameComponent = observer(
                             isActiveBranch && !isSelected && 'outline-dashed',
                             !isActiveBranch && isInDragSelection && 'outline-teal-500',
                         )}
-                        src={frame.url}
+                        src={srcOverride ?? frame.url}
                         sandbox="allow-modals allow-forms allow-same-origin allow-scripts allow-popups allow-downloads"
                         allow="geolocation; microphone; camera; midi; encrypted-media"
                         style={{ width: frame.dimension.width, height: frame.dimension.height }}

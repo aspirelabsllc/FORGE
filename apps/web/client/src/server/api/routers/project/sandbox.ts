@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import {
     CodeProvider,
+    CodesandboxProvider,
     createCodeProviderClient,
     getStaticCodeProvider,
 } from '@onlook/code-provider';
@@ -93,6 +94,24 @@ export const sandboxRouter = createTRPCRouter({
             });
             await provider.destroy();
             return session;
+        }),
+    // Returns a preview URL signed with a host token so the editor iframe can
+    // load the sandbox preview without CodeSandbox's cross-origin "trust this
+    // preview" prompt (which otherwise loops the frame and never loads).
+    previewToken: protectedProcedure
+        .input(
+            z.object({
+                sandboxId: z.string(),
+                port: z.number().optional(),
+            }),
+        )
+        .query(async ({ input, ctx }) => {
+            await verifySandboxAccess(ctx.db, ctx.user.id, input.sandboxId);
+            const { url } = await CodesandboxProvider.createPreviewToken(
+                input.sandboxId,
+                input.port ?? 3000,
+            );
+            return { url };
         }),
     hibernate: protectedProcedure
         .input(
