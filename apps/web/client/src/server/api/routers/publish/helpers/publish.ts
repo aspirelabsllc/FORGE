@@ -1,6 +1,6 @@
 import { DefaultSettings } from '@onlook/constants';
 import { type Deployment, type DrizzleDb } from '@onlook/db';
-import { DeploymentStatus, DeploymentType } from '@onlook/models';
+import { DeploymentStatus } from '@onlook/models';
 import { TRPCError } from '@trpc/server';
 import { PublishManager } from '../manager';
 import { deployFreestyle } from './deploy';
@@ -67,7 +67,6 @@ export async function publish({
             const publishManager = new PublishManager(provider);
             const files = await publishManager.publish({
                 deploymentId,
-                skipBadge: type === DeploymentType.CUSTOM,
                 buildScript: buildScript ?? DefaultSettings.COMMANDS.build,
                 buildFlags: buildFlags ?? DefaultSettings.EDITOR_SETTINGS.buildFlags,
                 envVars: deployment.envVars ?? {},

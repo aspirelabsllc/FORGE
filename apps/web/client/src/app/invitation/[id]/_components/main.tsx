@@ -119,7 +119,7 @@ export function Main({ invitationId }: { invitationId: string }) {
     return (
         <div className="flex flex-row w-full">
             <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-                <div className="text-xl">Join {inviter} on Onlook</div>
+                <div className="text-xl">Join {inviter} on Forge</div>
                 <div className="text-md text-foreground-tertiary">
                     {inviter} has invited you to join their project
                 </div>

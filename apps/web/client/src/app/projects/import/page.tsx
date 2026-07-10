@@ -38,7 +38,7 @@ const Page = () => {
                         <div className="space-y-2">
                             <CardTitle className="text-title3">Import a Local Project</CardTitle>
                             <CardDescription className="text-sm text-balance">
-                                Select a directory from your computer to start working with your project in Onlook.
+                                Select a directory from your computer to start working with your project in Forge.
                             </CardDescription>
                         </div>
                     </CardHeader>

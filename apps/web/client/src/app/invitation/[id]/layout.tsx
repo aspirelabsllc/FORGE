@@ -3,8 +3,8 @@ import { type Metadata } from 'next';
 import { HandleAuth } from './_components/auth';
 
 export const metadata: Metadata = {
-    title: 'Onlook',
-    description: 'Onlook – Invitation',
+    title: 'Forge',
+    description: 'Forge – Invitation',
 };
 
 export default async function Layout({ children }: Readonly<{ children: React.ReactNode }>) {

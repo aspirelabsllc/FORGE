@@ -5,8 +5,8 @@ import { redirect } from 'next/navigation';
 import { ImportGithubProjectProvider } from './_context';
 
 export const metadata: Metadata = {
-    title: 'Onlook',
-    description: 'Onlook – Import Github Project',
+    title: 'Forge',
+    description: 'Forge – Import Github Project',
 };
 
 export default async function Layout({ children }: Readonly<{ children: React.ReactNode }>) {

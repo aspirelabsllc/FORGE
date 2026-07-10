@@ -12,6 +12,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale } from 'next-intl/server';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
+import { AuthModal } from './_components/auth-modal';
 import { ThemeProvider } from './_components/theme';
 import { AuthProvider } from './auth/auth-context';
 
@@ -62,6 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                                 <AuthProvider>
                                     <NextIntlClientProvider>
                                         {children}
+                                        <AuthModal />
                                         <Toaster />
                                     </NextIntlClientProvider>
                                 </AuthProvider>

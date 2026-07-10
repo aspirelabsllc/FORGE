@@ -7,8 +7,8 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
-    title: 'Onlook',
-    description: 'Onlook – Projects',
+    title: 'Forge',
+    description: 'Forge – Projects',
 };
 
 export default async function Layout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -307,16 +307,16 @@ export const NewSelectFolder = () => {
                 description: "This is where we'll reference your App",
             },
             validating: {
-                title: 'Verifying compatibility with Onlook',
-                description: "We're checking to make sure this project can work with Onlook",
+                title: 'Verifying compatibility with Forge',
+                description: "We're checking to make sure this project can work with Forge",
             },
             valid: {
                 title: 'Project verified',
-                description: 'Your project is ready to import to Onlook',
+                description: 'Your project is ready to import to Forge',
             },
             invalid: {
-                title: "This project won't work with Onlook",
-                description: 'Onlook only works with NextJS + React + Tailwind projects',
+                title: "This project won't work with Forge",
+                description: 'Forge only works with NextJS + React + Tailwind projects',
             },
         };
 

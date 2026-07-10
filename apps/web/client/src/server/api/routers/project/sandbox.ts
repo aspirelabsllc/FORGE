@@ -62,8 +62,8 @@ export const sandboxRouter = createTRPCRouter({
             const newSandbox = await CodesandboxProvider.createProject({
                 source: 'template',
                 id: template.id,
-                title: input.title || 'Onlook Test Sandbox',
-                description: 'Test sandbox for Onlook sync engine',
+                title: input.title || 'Forge Test Sandbox',
+                description: 'Test sandbox for Forge sync engine',
                 tags: ['onlook-test'],
             });
 

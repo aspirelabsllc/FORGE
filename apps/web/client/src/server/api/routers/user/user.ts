@@ -12,20 +12,46 @@ import { userSettingsRouter } from './user-settings';
 export const userRouter = createTRPCRouter({
     get: protectedProcedure.query(async ({ ctx }) => {
         const authUser = ctx.user;
-        const user = await ctx.db.query.users.findFirst({
+        let user = await ctx.db.query.users.findFirst({
             where: eq(users.id, authUser.id),
         });
 
         const { displayName, firstName, lastName } = getUserName(authUser);
-        const userData = user ? fromDbUser({
+
+        // Self-heal: a valid auth session with no profile row (e.g. an interrupted
+        // sign-up where `user.upsert` never ran) otherwise reads as "logged out"
+        // across the app, silently breaking project creation. Create the row so an
+        // authenticated caller is always treated as one. Idempotent + race-safe.
+        if (!user) {
+            const [created] = await ctx.db
+                .insert(users)
+                .values({
+                    id: authUser.id,
+                    firstName,
+                    lastName,
+                    displayName,
+                    email: authUser.email,
+                    avatarUrl: authUser.user_metadata.avatarUrl,
+                })
+                .onConflictDoNothing()
+                .returning();
+            user = created ?? await ctx.db.query.users.findFirst({
+                where: eq(users.id, authUser.id),
+            });
+        }
+
+        if (!user) {
+            return null;
+        }
+
+        return fromDbUser({
             ...user,
             firstName: user.firstName ?? firstName,
             lastName: user.lastName ?? lastName,
             displayName: user.displayName ?? displayName,
             email: user.email ?? authUser.email,
             avatarUrl: user.avatarUrl ?? authUser.user_metadata.avatarUrl,
-        }) : null;
-        return userData;
+        });
     }),
     getById: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {
         // This currently only supports looking up the caller's own record -

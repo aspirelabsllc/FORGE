@@ -91,7 +91,7 @@ export const UserDeleteSection = observer(() => {
                                     </div>
                                     <div className="flex items-start gap-2">
                                         <span className="mt-0.5">•</span>
-                                        <span>Delete all of your projects from Onlook's servers.</span>
+                                        <span>Delete all of your projects from Forge's servers.</span>
                                     </div>
                                     <div className="flex items-start gap-2">
                                         <span className="mt-0.5">•</span>

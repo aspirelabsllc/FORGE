@@ -74,9 +74,9 @@ export const VerifyProject = () => {
         if (!validation) {
             return (
                 <>
-                    <CardTitle>{'Verifying compatibility with Onlook'}</CardTitle>
+                    <CardTitle>{'Verifying compatibility with Forge'}</CardTitle>
                     <CardDescription>
-                        {"We're checking to make sure this project can work with Onlook"}
+                        {"We're checking to make sure this project can work with Forge"}
                     </CardDescription>
                 </>
             );
@@ -85,15 +85,15 @@ export const VerifyProject = () => {
             return (
                 <>
                     <CardTitle>{'Project verified'}</CardTitle>
-                    <CardDescription>{'Your project is ready to import to Onlook'}</CardDescription>
+                    <CardDescription>{'Your project is ready to import to Forge'}</CardDescription>
                 </>
             );
         } else {
             return (
                 <>
-                    <CardTitle>{"This project won't work with Onlook"}</CardTitle>
+                    <CardTitle>{"This project won't work with Forge"}</CardTitle>
                     <CardDescription>
-                        {'Onlook only works with NextJS + React + Tailwind projects'}
+                        {'Forge only works with NextJS + React + Tailwind projects'}
                     </CardDescription>
                 </>
             );

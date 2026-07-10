@@ -7,7 +7,6 @@ import {
     SUPPORTED_LOCK_FILES
 } from '@onlook/constants';
 import type { Deployment, deploymentUpdateSchema } from '@onlook/db';
-import { addBuiltWithScript, injectBuiltWithScript } from '@onlook/growth';
 import { DeploymentStatus } from '@onlook/models';
 import { addNextBuildConfig } from '@onlook/parser';
 import {
@@ -90,14 +89,12 @@ export class PublishManager {
         deploymentId,
         buildScript,
         buildFlags,
-        skipBadge,
         envVars,
         updateDeployment,
     }: {
         deploymentId: string;
         buildScript: string;
         buildFlags: string;
-        skipBadge: boolean;
         envVars: Record<string, string>;
         updateDeployment: (
             deployment: z.infer<typeof deploymentUpdateSchema>,
@@ -111,17 +108,6 @@ export class PublishManager {
             progress: 30,
             envVars,
         });
-
-        if (!skipBadge) {
-            await updateDeployment({
-                id: deploymentId,
-                status: DeploymentStatus.IN_PROGRESS,
-                message: 'Adding "Built with Onlook" badge...',
-                progress: 35,
-                envVars,
-            });
-            await this.addBadge('./');
-        }
 
         await updateDeployment({
             id: deploymentId,
@@ -160,11 +146,6 @@ export class PublishManager {
         // Serialize the files for deployment
         const NEXT_BUILD_OUTPUT_PATH = `${CUSTOM_OUTPUT_DIR}/standalone`;
         return await this.serializeFiles(NEXT_BUILD_OUTPUT_PATH);
-    }
-
-    private async addBadge(folderPath: string) {
-        await injectBuiltWithScript(folderPath, this.fileOps);
-        await addBuiltWithScript(folderPath, this.fileOps);
     }
 
     private async runPrepareStep() {
