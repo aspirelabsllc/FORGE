@@ -3,7 +3,6 @@
 import { env } from '@/env';
 import { Routes } from '@/utils/constants';
 import { createClient } from '@/utils/supabase/server';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { api } from '~/trpc/server';
 
@@ -42,11 +41,10 @@ export async function emailAuth(
     if (mode === 'signup') {
         // Send the confirmation link to the callback route (which exchanges the
         // code for a session + creates the user), NOT the Site URL root.
-        const origin = (await headers()).get('origin') ?? env.NEXT_PUBLIC_SITE_URL;
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: { emailRedirectTo: `${origin}${Routes.AUTH_CALLBACK}` },
+            options: { emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL}${Routes.AUTH_CALLBACK}` },
         });
         if (error) {
             return { error: error.message };
