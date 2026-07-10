@@ -1,10 +1,8 @@
-delete from storage.objects where bucket_id = 'preview_images';
-delete from storage.buckets where id = 'preview_images';
-
 insert into storage.buckets
   (id, name, public)
 values
-  ('preview_images', 'preview_images', true);
+  ('preview_images', 'preview_images', true)
+on conflict (id) do update set public = excluded.public;
 
 -- Allow any users to select from preview_images files
 drop policy if exists "preview_images_select_policy" on storage.objects;
