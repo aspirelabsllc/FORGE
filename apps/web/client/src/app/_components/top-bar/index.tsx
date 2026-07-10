@@ -12,7 +12,7 @@ export const TopBar = () => {
                 aria-label="Forge"
             >
                 <span
-                    className={`${wordmarkFont.className} pl-[0.3em] text-base font-semibold uppercase leading-none tracking-[0.3em] text-white`}
+                    className={`${wordmarkFont.className} text-[0.95rem] uppercase leading-none tracking-[0.12em] text-white`}
                 >
                     F
                     <span className="text-orange-500 [text-shadow:0_0_12px_rgba(255,130,40,0.9),0_0_22px_rgba(255,90,20,0.5)]">

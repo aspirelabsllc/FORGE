@@ -1,4 +1,4 @@
-import { Quicksand, Vujahday_Script } from 'next/font/google';
+import { Audiowide, Vujahday_Script } from 'next/font/google';
 
 export const vujahdayScript = Vujahday_Script({
   weight: '400',
@@ -6,9 +6,10 @@ export const vujahdayScript = Vujahday_Script({
   display: 'swap',
 });
 
-// Rounded geometric monoline wordmark, in the spirit of the original Onlook logotype.
-export const wordmarkFont = Quicksand({
-  weight: ['500', '600', '700'],
+// Wide, rounded, monoline geometric wordmark — a wide/extended logotype in the
+// spirit of the original Onlook mark.
+export const wordmarkFont = Audiowide({
+  weight: '400',
   subsets: ['latin'],
   display: 'swap',
 });
