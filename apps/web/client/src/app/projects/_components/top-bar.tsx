@@ -2,6 +2,7 @@
 
 import { useAuthContext } from '@/app/auth/auth-context';
 import { CurrentUserAvatar } from '@/components/ui/avatar-dropdown';
+import { ForgeWordmark } from '@/components/ui/forge-wordmark';
 import { transKeys } from '@/i18n/keys';
 import { api } from '@/trpc/react';
 import { LocalForageKeys, Routes } from '@/utils/constants';
@@ -165,9 +166,9 @@ export const TopBar = ({ searchQuery, onSearchChange }: TopBarProps) => {
     };
 
     return (
-        <div className="w-full max-w-6xl mx-auto flex items-center justify-between p-4 text-small text-foreground-secondary gap-6">
+        <div className="w-full max-w-6xl mx-auto flex items-center justify-between p-4 text-small text-foreground-secondary gap-6 border-b border-[hsl(350_45%_28%/0.35)]">
             <Link href={Routes.HOME} className="flex items-center justify-start mt-0 py-3">
-                <Icons.OnlookTextLogo className="w-24" viewBox="0 0 139 17" />
+                <ForgeWordmark className="text-lg" />
             </Link>
 
             {typeof onSearchChange === 'function' ? (
@@ -228,35 +229,33 @@ export const TopBar = ({ searchQuery, onSearchChange }: TopBarProps) => {
                     <DropdownMenuContent sideOffset={8} className="translate-x-[-12px]">
                         <DropdownMenuItem
                             className={cn(
-                                'focus:bg-blue-100 focus:text-blue-900',
-                                'hover:bg-blue-100 hover:text-blue-900',
-                                'dark:focus:bg-blue-900 dark:focus:text-blue-100',
-                                'dark:hover:bg-blue-900 dark:hover:text-blue-100',
+                                'focus:bg-red-950/60 focus:text-red-100',
+                                'hover:bg-red-950/60 hover:text-red-100',
+                                'dark:focus:bg-red-950/60 dark:focus:text-red-100',
+                                'dark:hover:bg-red-950/60 dark:hover:text-red-100',
                                 'cursor-pointer select-none group',
                             )}
                             onSelect={handleStartBlankProject}
                             disabled={isCreatingProject}
                         >
                             {isCreatingProject ? (
-                                <Icons.LoadingSpinner className="w-4 h-4 mr-1 animate-spin text-foreground-secondary group-hover:text-blue-100" />
+                                <Icons.LoadingSpinner className="w-4 h-4 mr-1 animate-spin text-foreground-secondary group-hover:text-red-100" />
                             ) : (
-                                <Icons.FilePlus className="w-4 h-4 mr-1 text-foreground-secondary group-hover:text-blue-100" />
+                                <Icons.FilePlus className="w-4 h-4 mr-1 text-foreground-secondary group-hover:text-red-100" />
                             )}
                             {t(transKeys.projects.actions.blankProject)}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             className={cn(
-                                'focus:bg-teal-100 focus:text-teal-900',
-                                'hover:bg-teal-100 hover:text-teal-900',
-                                'dark:focus:bg-teal-900 dark:focus:text-teal-100',
-                                'dark:hover:bg-teal-900 dark:hover:text-teal-100',
+                                'focus:bg-background-active focus:text-foreground-primary',
+                                'hover:bg-background-active hover:text-foreground-primary',
                                 'cursor-pointer select-none group',
                             )}
                             onSelect={() => {
                                 router.push(Routes.IMPORT_PROJECT);
                             }}
                         >
-                            <Icons.Upload className="w-4 h-4 mr-1 text-foreground-secondary group-hover:text-teal-100" />
+                            <Icons.Upload className="w-4 h-4 mr-1 text-foreground-secondary group-hover:text-foreground-primary" />
                             <p className="text-microPlus">{t(transKeys.projects.actions.import)}</p>
                         </DropdownMenuItem>
                     </DropdownMenuContent>

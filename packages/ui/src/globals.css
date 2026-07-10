@@ -465,71 +465,72 @@
     --np-secondary-icon-background: #14b8a6; /* teal-500*/
     --np-secondary-icon-shape: #ccfbf1; /* teal 100*/
 
-    --background: 20 14.3% 4.1%; /* shadcn */
-    --background-onlook: 0 0% 10%; /* gray[900] */
-    --background-brand: 171 100% 17%; /* teal[700] */
-    --background-brand-secondary: 171 100% 27%; /* teal[500] */
-    --background-primary: 0 0% 10%; /* gray[900] */
-    --background-secondary: 0 0% 12%; /* gray[800] */
+    /* Forge: smoke (warm charcoal) base */
+    --background: 20 7% 8%;
+    --background-onlook: 20 6% 12%;
+    --background-brand: 350 80% 44%; /* forge red */
+    --background-brand-secondary: 350 75% 55%;
+    --background-primary: 20 6% 9%;
+    --background-secondary: 20 6% 13%;
     --background-positive: 0 0% 12%; /* green[800] */
-    --background-tertiary: 0 0% 20%; /* gray[700] */
-    --background-toolbar-base: 0 0% 0% 0.85; /* black[85] */
-    --background-hover: 0 0% 12%; /* gray[800] */
-    --background-active: 0 0% 20%; /* gray[700] */
-    --background-disabled: 0 0% 10%; /* gray[900] */
+    --background-tertiary: 20 5% 19%;
+    --background-toolbar-base: 20 8% 6% / 0.85;
+    --background-hover: 20 6% 15%;
+    --background-active: 20 5% 21%;
+    --background-disabled: 20 6% 9%;
 
-    --foreground: 60 9.1% 97.8%; /* shadcn */
-    --foreground-onlook: 0 0% 67%; /* gray[200] */
-    --foreground-brand: 344 100% 66%; /* red[DEFAULT] */
-    --foreground-primary: 0 0% 100%; /* gray[50] */
-    --foreground-secondary: 0 0% 67%; /* gray[200] */
-    --foreground-tertiary: 0 0% 57%; /* gray[300] */
-    --foreground-quadranary: 0 0% 38%; /* gray[500] */
-    --foreground-positive: 147 100% 44%; /* green[200] */
-    --foreground-hover: 0 0% 78%; /* gray[100] */
-    --foreground-active: 0 0% 100%; /* gray[50] */
-    --foreground-disabled: 0 0% 10%; /* gray[900] */
+    --foreground: 30 8% 96%; /* warm off-white */
+    --foreground-onlook: 20 5% 67%;
+    --foreground-brand: 350 90% 62%; /* red */
+    --foreground-primary: 0 0% 100%;
+    --foreground-secondary: 20 5% 67%;
+    --foreground-tertiary: 20 4% 56%;
+    --foreground-quadranary: 20 4% 40%;
+    --foreground-positive: 147 60% 50%; /* green */
+    --foreground-hover: 30 8% 82%;
+    --foreground-active: 0 0% 100%;
+    --foreground-disabled: 20 6% 12%;
 
-    --primary: 60 9.1% 97.8%; /* shadcn */
-    --primary-foreground: 24 9.8% 10%; /* shadcn */
+    --primary: 350 84% 47%; /* forge red */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 12 6.5% 15.1%; /* shadcn */
-    --secondary-foreground: 60 9.1% 97.8%; /* shadcn */
+    --secondary: 20 6% 15%; /* smoke */
+    --secondary-foreground: 30 8% 96%;
 
     --destructive: 345.35 100% 16.86%; /* red[900] */
     --destructive-foreground: 344.21 100% 96.27%; /* red[100] */
 
-    --card: 20 14.3% 4.1%; /* shadcn */
-    --card-foreground: 60 9.1% 97.8%; /* shadcn */
+    --card: 20 7% 8%; /* smoke */
+    --card-foreground: 30 8% 96%;
 
-    --popover: 20 14.3% 4.1%; /* shadcn */
-    --popover-foreground: 60 9.1% 97.8%; /* shadcn */
+    --popover: 20 7% 9%; /* smoke */
+    --popover-foreground: 30 8% 96%;
 
-    --icon: 0 0% 57%; /* gray[300] */
-    --icon-hover: 0 0% 100%; /* gray[50] */
-    --icon-active: 0 0% 100%; /* gray[50] */
-    --icon-disabled: 0 0% 67%; /* gray[200] */
+    --icon: 20 4% 58%;
+    --icon-hover: 0 0% 100%;
+    --icon-active: 0 0% 100%;
+    --icon-disabled: 20 5% 67%;
 
-    --border: 0 0% 12%; /* gray[800] */
-    --border-active: 0 0% 47%; /* gray[400] */
-    --border-hover: 0 0% 38%; /* gray[500] */
+    --border: 20 6% 16%; /* smoke */
+    --border-active: 350 50% 44%; /* red */
+    --border-hover: 20 5% 30%;
 
-    --muted: 12 6.5% 15.1%; /* shadcn */
-    --muted-foreground: 24 5.4% 63.9%; /* shadcn */
+    --muted: 20 6% 15%; /* smoke */
+    --muted-foreground: 20 4% 62%;
 
-    --accent: 12 6.5% 15.1%; /* shadcn */
-    --accent-foreground: 60 9.1% 97.8%; /* shadcn */
+    --accent: 20 6% 16%; /* smoke */
+    --accent-foreground: 30 8% 96%;
 
-    --input: 12 6.5% 15.1%; /* shadcn */
-    --ring: 24 5.7% 82.9%; /* shadcn */
-    --sidebar: hsl(240 5.9% 10%);
-    --sidebar-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-primary: hsl(224.3 76.3% 48%);
+    --input: 20 6% 15%; /* smoke */
+    --ring: 350 84% 52%; /* red */
+    --sidebar: hsl(20 8% 9%);
+    --sidebar-foreground: hsl(20 5% 90%);
+    --sidebar-primary: hsl(350 84% 47%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(240 3.7% 15.9%);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(240 3.7% 15.9%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
+    --sidebar-accent: hsl(20 6% 16%);
+    --sidebar-accent-foreground: hsl(20 5% 90%);
+    --sidebar-border: hsl(20 6% 16%);
+    --sidebar-ring: hsl(350 84% 52%);
 }
 
 @layer base {
