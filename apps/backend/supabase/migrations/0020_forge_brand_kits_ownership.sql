@@ -54,3 +54,10 @@ ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "brand_kit_id" uuid;
 DO $$ BEGIN
 	ALTER TABLE "projects" ADD CONSTRAINT "projects_brand_kit_id_brand_kits_id_fk" FOREIGN KEY ("brand_kit_id") REFERENCES "brand_kits"("id") ON DELETE set null;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
+--> statement-breakpoint
+-- Further drift caught by a full schema-vs-DB diff (only these two columns remained):
+DO $$ BEGIN CREATE TYPE "agent_type" AS ENUM ('root', 'user'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+--> statement-breakpoint
+ALTER TABLE "conversations" ADD COLUMN IF NOT EXISTS "agent_type" "agent_type" DEFAULT 'root';
+--> statement-breakpoint
+ALTER TABLE "messages" ADD COLUMN IF NOT EXISTS "usage" jsonb;
