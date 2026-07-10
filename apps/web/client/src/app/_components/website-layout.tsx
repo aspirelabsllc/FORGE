@@ -1,28 +1,22 @@
 'use client';
 
 import { TopBar } from './top-bar';
-import { Footer } from './landing-page/page-footer';
 
 interface WebsiteLayoutProps {
     children: React.ReactNode;
+    /** Retained for call-site compatibility; the marketing footer has been removed. */
     showFooter?: boolean;
 }
 
-export function WebsiteLayout({ children, showFooter = true }: WebsiteLayoutProps) {
+export function WebsiteLayout({ children }: WebsiteLayoutProps) {
     return (
         <div className="min-h-screen bg-background">
             {/* Fixed TopBar that persists across page transitions */}
-            <div className="fixed top-0 left-0 w-full h-12 bg-background/80 backdrop-blur-sm z-50 top-bar">
+            <div className="top-bar fixed top-0 left-0 z-50 h-12 w-full bg-background/40 backdrop-blur-sm">
                 <TopBar />
             </div>
-            
-            {/* Page content */}
-            <div>
-                {children}
-            </div>
-            
-            {/* Footer */}
-            {showFooter && <Footer />}
+
+            <div>{children}</div>
         </div>
     );
-} 
+}
