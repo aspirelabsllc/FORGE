@@ -465,12 +465,12 @@
     --np-secondary-icon-background: #14b8a6; /* teal-500*/
     --np-secondary-icon-shape: #ccfbf1; /* teal 100*/
 
-    /* Forge: smoke (warm charcoal) base */
-    --background: 20 7% 8%;
-    --background-onlook: 20 6% 12%;
-    --background-brand: 350 80% 44%; /* forge red */
-    --background-brand-secondary: 350 75% 55%;
-    --background-primary: 20 6% 9%;
+    /* Forge: near-black base (smoke texture layered on top in-app) */
+    --background: 0 0% 4%;
+    --background-onlook: 0 0% 8%;
+    --background-brand: 352 60% 42%; /* deep forge red */
+    --background-brand-secondary: 352 58% 52%;
+    --background-primary: 0 0% 6%;
     --background-secondary: 20 6% 13%;
     --background-positive: 0 0% 12%; /* green[800] */
     --background-tertiary: 20 5% 19%;
@@ -481,7 +481,7 @@
 
     --foreground: 30 8% 96%; /* warm off-white */
     --foreground-onlook: 20 5% 67%;
-    --foreground-brand: 350 90% 62%; /* red */
+    --foreground-brand: 352 72% 57%; /* red */
     --foreground-primary: 0 0% 100%;
     --foreground-secondary: 20 5% 67%;
     --foreground-tertiary: 20 4% 56%;
@@ -491,7 +491,7 @@
     --foreground-active: 0 0% 100%;
     --foreground-disabled: 20 6% 12%;
 
-    --primary: 350 84% 47%; /* forge red */
+    --primary: 352 56% 43%; /* deep forge red */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 20 6% 15%; /* smoke */
@@ -500,10 +500,10 @@
     --destructive: 345.35 100% 16.86%; /* red[900] */
     --destructive-foreground: 344.21 100% 96.27%; /* red[100] */
 
-    --card: 20 7% 8%; /* smoke */
+    --card: 0 0% 5%;
     --card-foreground: 30 8% 96%;
 
-    --popover: 20 7% 9%; /* smoke */
+    --popover: 0 0% 6%;
     --popover-foreground: 30 8% 96%;
 
     --icon: 20 4% 58%;
@@ -512,7 +512,7 @@
     --icon-disabled: 20 5% 67%;
 
     --border: 20 6% 16%; /* smoke */
-    --border-active: 350 50% 44%; /* red */
+    --border-active: 352 42% 40%; /* red */
     --border-hover: 20 5% 30%;
 
     --muted: 20 6% 15%; /* smoke */
@@ -522,15 +522,15 @@
     --accent-foreground: 30 8% 96%;
 
     --input: 20 6% 15%; /* smoke */
-    --ring: 350 84% 52%; /* red */
-    --sidebar: hsl(20 8% 9%);
+    --ring: 352 62% 48%; /* red */
+    --sidebar: hsl(0 0% 6%);
     --sidebar-foreground: hsl(20 5% 90%);
-    --sidebar-primary: hsl(350 84% 47%);
+    --sidebar-primary: hsl(352 56% 43%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
     --sidebar-accent: hsl(20 6% 16%);
     --sidebar-accent-foreground: hsl(20 5% 90%);
     --sidebar-border: hsl(20 6% 16%);
-    --sidebar-ring: hsl(350 84% 52%);
+    --sidebar-ring: hsl(352 62% 48%);
 }
 
 @layer base {

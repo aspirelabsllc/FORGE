@@ -1,6 +1,7 @@
 'use client';
 
 import { NonProjectSettingsModal } from '@/components/ui/settings-modal/non-project';
+import { SmokeBackground } from '@/components/ui/smoke-background';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { SelectProject } from './_components/select';
@@ -10,6 +11,7 @@ const Page = observer(() => {
     const [searchQuery, setSearchQuery] = useState('');
     return (
         <div className="w-screen h-screen flex flex-col">
+            <SmokeBackground />
             <TopBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
             <div className="flex justify-center w-full h-full overflow-y-auto overflow-x-visible">
                 <SelectProject externalSearchQuery={searchQuery} />
