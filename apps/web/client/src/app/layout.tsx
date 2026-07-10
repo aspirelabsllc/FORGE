@@ -50,12 +50,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
             </head>
             <body>
-                {isProduction && (
-                    <>
-                        <Script src="https://z.onlook.com/cdn-cgi/zaraz/i.js" strategy="lazyOnload" />
-                        <RB2BLoader />
-                    </>
-                )}
                 <TRPCReactProvider>
                     <FeatureFlagsProvider>
                         <TelemetryProvider>
