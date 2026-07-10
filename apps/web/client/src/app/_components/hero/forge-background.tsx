@@ -4,9 +4,9 @@ import { motion } from 'motion/react';
 import { useEffect, useRef } from 'react';
 
 interface Blob {
-    bx: number; // base x (fraction of width)
-    by: number; // base y (fraction of height)
-    r: number; // radius (fraction of min dimension)
+    bx: number;
+    by: number;
+    r: number;
     phase: number;
     driftX: number;
     driftY: number;
@@ -14,19 +14,22 @@ interface Blob {
     rPhase: number;
 }
 
-interface TrailPt {
-    x: number;
-    y: number;
-    t: number;
+interface Bolt {
+    paths: [number, number][][]; // main path + branches
+    born: number;
+    life: number;
+    seed: number;
 }
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 /**
  * Subtle molten background: a mostly-black field with slow reddish "lava" pools
- * that drift and breathe (a gentle global pulse). The cursor drags a reddish,
- * flickering lightning trail behind it. Single canvas, additive blending —
- * smooth. Honours prefers-reduced-motion.
+ * that drift and breathe. When the cursor moves it drops big, branching red
+ * lightning bolts with a white-hot core and heavy bloom; each bolt holds its
+ * shape and fades out slowly (so the arc reads as slow, not flickery), and
+ * bolts only spawn while the pointer is actually moving. Honours
+ * prefers-reduced-motion.
  */
 export function ForgeBackground() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -42,7 +45,7 @@ export function ForgeBackground() {
         let width = 0;
         let height = 0;
         let dpr = 1;
-        const start = performance.now();
+        const startT = performance.now();
         let raf = 0;
 
         const resize = () => {
@@ -70,7 +73,6 @@ export function ForgeBackground() {
         }
 
         const drawLava = (elapsed: number) => {
-            // Gentle global breathing (~7s period).
             const breathe = 0.6 + 0.4 * Math.sin(elapsed / 1100);
             const minDim = Math.min(width, height);
             ctx.globalCompositeOperation = 'lighter';
@@ -80,7 +82,7 @@ export function ForgeBackground() {
                 const r =
                     b.r * minDim * (0.92 + 0.08 * Math.sin(elapsed * 0.0004 + b.rPhase)) *
                     (0.85 + 0.25 * breathe);
-                const a = 0.05 + 0.09 * breathe; // subtle; mostly black
+                const a = 0.05 + 0.09 * breathe;
                 const g = ctx.createRadialGradient(x, y, 0, x, y, r);
                 g.addColorStop(0, `rgba(168,30,14,${a})`);
                 g.addColorStop(0.45, `rgba(96,16,8,${a * 0.5})`);
@@ -93,14 +95,15 @@ export function ForgeBackground() {
         };
 
         // --- Cursor lightning ----------------------------------------------
-        const trail: TrailPt[] = [];
-        const TRAIL_MS = 240;
+        const bolts: Bolt[] = [];
+        const pointer = { x: 0, y: 0, has: false };
+        const SPAWN_DIST = 62;
 
-        // Fractal (midpoint-displacement) jagged path between two points.
-        const bolt = (x1: number, y1: number, x2: number, y2: number, disp: number) => {
+        // Fixed jagged path via midpoint displacement (generated once per bolt).
+        const boltPath = (x1: number, y1: number, x2: number, y2: number, disp: number) => {
             const pts: [number, number][] = [[x1, y1]];
             const rec = (ax: number, ay: number, bx: number, by: number, d: number) => {
-                if (d < 2.5) {
+                if (d < 4) {
                     pts.push([bx, by]);
                     return;
                 }
@@ -113,6 +116,23 @@ export function ForgeBackground() {
             return pts;
         };
 
+        const spawnBolt = (x1: number, y1: number, x2: number, y2: number, now: number) => {
+            const len = Math.hypot(x2 - x1, y2 - y1);
+            const disp = Math.min(80, Math.max(28, len * 0.7));
+            const main = boltPath(x1, y1, x2, y2, disp);
+            const paths: [number, number][][] = [main];
+            const branches = 2 + ((Math.random() * 3) | 0);
+            for (let i = 0; i < branches; i++) {
+                const k = 1 + ((Math.random() * (main.length - 2)) | 0);
+                const [bx, by] = main[k]!;
+                const bl = rand(30, 90);
+                const ang = rand(0, Math.PI * 2);
+                paths.push(boltPath(bx, by, bx + Math.cos(ang) * bl, by + Math.sin(ang) * bl, disp * 0.5));
+            }
+            bolts.push({ paths, born: now, life: rand(750, 1150), seed: Math.random() });
+            if (bolts.length > 16) bolts.shift();
+        };
+
         const strokePts = (pts: [number, number][]) => {
             ctx.beginPath();
             ctx.moveTo(pts[0]![0], pts[0]![1]);
@@ -120,54 +140,63 @@ export function ForgeBackground() {
             ctx.stroke();
         };
 
-        const drawLightning = (now: number) => {
-            while (trail.length && now - trail[0]!.t > TRAIL_MS) trail.shift();
-            if (trail.length < 2) return;
+        const drawBolts = (now: number) => {
             ctx.globalCompositeOperation = 'lighter';
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
-            for (let i = 1; i < trail.length; i++) {
-                const p0 = trail[i - 1]!;
-                const p1 = trail[i]!;
-                const alpha = Math.max(0, 1 - (now - p1.t) / TRAIL_MS);
+            for (let i = bolts.length - 1; i >= 0; i--) {
+                const b = bolts[i]!;
+                const age = now - b.born;
+                if (age >= b.life) {
+                    bolts.splice(i, 1);
+                    continue;
+                }
+                const t = age / b.life;
+                // Fast rise, slow fall.
+                let alpha = t < 0.1 ? t / 0.1 : 1 - (t - 0.1) / 0.9;
+                alpha *= 0.82 + 0.18 * Math.sin(now * 0.012 + b.seed * 12); // gentle electric flicker
+                alpha = Math.max(0, alpha);
                 if (alpha <= 0.02) continue;
-                const dx = p1.x - p0.x;
-                const dy = p1.y - p0.y;
-                const seg = Math.hypot(dx, dy);
-                const pts = bolt(p0.x, p0.y, p1.x, p1.y, Math.min(18, 6 + seg * 0.5));
-                // outer red glow
-                ctx.strokeStyle = `rgba(255,44,22,${alpha * 0.45})`;
-                ctx.lineWidth = 4.5;
-                strokePts(pts);
-                // bright core
-                ctx.strokeStyle = `rgba(255,180,150,${alpha})`;
-                ctx.lineWidth = 1.4;
-                strokePts(pts);
-                // occasional fork
-                if (Math.random() < 0.15 && pts.length > 2) {
-                    const k = (Math.random() * (pts.length - 1)) | 0;
-                    const bx = pts[k]![0] + rand(-24, 24);
-                    const by = pts[k]![1] + rand(-24, 24);
-                    const fork = bolt(pts[k]![0], pts[k]![1], bx, by, 12);
-                    ctx.strokeStyle = `rgba(255,90,50,${alpha * 0.6})`;
-                    ctx.lineWidth = 1;
-                    strokePts(fork);
+                for (const path of b.paths) {
+                    ctx.strokeStyle = `rgba(255,24,10,${alpha * 0.16})`; // outer bloom
+                    ctx.lineWidth = 15;
+                    strokePts(path);
+                    ctx.strokeStyle = `rgba(255,46,22,${alpha * 0.34})`;
+                    ctx.lineWidth = 7.5;
+                    strokePts(path);
+                    ctx.strokeStyle = `rgba(255,104,64,${alpha * 0.72})`;
+                    ctx.lineWidth = 3.2;
+                    strokePts(path);
+                    ctx.strokeStyle = `rgba(255,224,205,${alpha})`; // white-hot core
+                    ctx.lineWidth = 1.5;
+                    strokePts(path);
                 }
             }
         };
 
         const step = (now: number) => {
             ctx.clearRect(0, 0, width, height);
-            drawLava(now - start);
-            if (!prefersReduced) drawLightning(now);
+            drawLava(now - startT);
+            if (!prefersReduced) drawBolts(now);
             ctx.globalCompositeOperation = 'source-over';
             raf = requestAnimationFrame(step);
         };
 
         const onMove = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
-            trail.push({ x: e.clientX - rect.left, y: e.clientY - rect.top, t: performance.now() });
-            if (trail.length > 40) trail.shift();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            if (!pointer.has) {
+                pointer.x = x;
+                pointer.y = y;
+                pointer.has = true;
+                return;
+            }
+            if (Math.hypot(x - pointer.x, y - pointer.y) >= SPAWN_DIST) {
+                spawnBolt(pointer.x, pointer.y, x, y, performance.now());
+                pointer.x = x;
+                pointer.y = y;
+            }
         };
 
         resize();
