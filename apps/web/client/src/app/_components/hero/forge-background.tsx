@@ -3,29 +3,30 @@
 import { motion } from 'motion/react';
 import { useEffect, useRef } from 'react';
 
-interface Ember {
+interface Blob {
+    bx: number; // base x (fraction of width)
+    by: number; // base y (fraction of height)
+    r: number; // radius (fraction of min dimension)
+    phase: number;
+    driftX: number;
+    driftY: number;
+    speed: number;
+    rPhase: number;
+}
+
+interface TrailPt {
     x: number;
     y: number;
-    px: number; // previous position (for spark trails)
-    py: number;
-    vx: number;
-    vy: number;
-    size: number;
-    life: number;
-    maxLife: number;
-    flicker: number;
-    heat: number; // 0..1 → colour (1 = white-hot, 0 = cooling red)
-    spark: boolean; // bright, fast, trailed
+    t: number;
 }
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 /**
- * Interactive forge background. A warm glow anchored at the bottom-centre with
- * embers rising and cooling; the pointer "stokes" the forge (scattering nearby
- * embers and throwing sparks), and a hammer strikes the anvil on a rhythm,
- * bursting sparks with a glow-pulse. Single canvas, additive blending,
- * pre-rendered sprites — smooth. Honours prefers-reduced-motion.
+ * Subtle molten background: a mostly-black field with slow reddish "lava" pools
+ * that drift and breathe (a gentle global pulse). The cursor drags a reddish,
+ * flickering lightning trail behind it. Single canvas, additive blending —
+ * smooth. Honours prefers-reduced-motion.
  */
 export function ForgeBackground() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -38,32 +39,10 @@ export function ForgeBackground() {
 
         const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        const makeSprite = (r: number, g: number, b: number) => {
-            const s = document.createElement('canvas');
-            const S = 64;
-            s.width = s.height = S;
-            const sctx = s.getContext('2d')!;
-            const grad = sctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-            grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
-            grad.addColorStop(0.35, `rgba(${r},${g},${b},0.55)`);
-            grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
-            sctx.fillStyle = grad;
-            sctx.fillRect(0, 0, S, S);
-            return s;
-        };
-        const spriteHot = makeSprite(255, 240, 200);
-        const spriteMid = makeSprite(255, 140, 42);
-        const spriteCool = makeSprite(232, 66, 18);
-
         let width = 0;
         let height = 0;
         let dpr = 1;
-        let target = 0;
-        const embers: Ember[] = [];
-        const pointer = { x: 0, y: 0, active: false };
-        let flash = 0; // transient glow boost from a strike
-        let nextStrike = 900; // ms until first hammer strike
-        let last = performance.now();
+        const start = performance.now();
         let raf = 0;
 
         const resize = () => {
@@ -73,179 +52,131 @@ export function ForgeBackground() {
             canvas.width = Math.max(1, Math.floor(width * dpr));
             canvas.height = Math.max(1, Math.floor(height * dpr));
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            target = Math.round(Math.min(180, Math.max(50, width / 11)));
         };
 
-        const makeEmber = (
-            x: number,
-            y: number,
-            spark: boolean,
-            vx?: number,
-            vy?: number,
-        ): Ember => {
-            const speed = spark ? rand(2.4, 4.4) : rand(0.45, 1.5);
-            return {
-                x,
-                y,
-                px: x,
-                py: y,
-                vx: vx ?? rand(-0.2, 0.2),
-                vy: vy ?? -speed,
-                size: spark ? rand(0.9, 1.7) : rand(1.1, 3.0),
-                life: 0,
-                maxLife: spark ? rand(38, 75) : rand(130, 280),
-                flicker: rand(0, Math.PI * 2),
-                heat: spark ? 1 : rand(0.55, 0.9),
-                spark,
-            };
-        };
+        // --- Lava pools -----------------------------------------------------
+        const blobs: Blob[] = [];
+        for (let i = 0; i < 5; i++) {
+            blobs.push({
+                bx: rand(0.12, 0.88),
+                by: rand(0.4, 1.05),
+                r: rand(0.32, 0.6),
+                phase: rand(0, Math.PI * 2),
+                driftX: rand(0.04, 0.09),
+                driftY: rand(0.03, 0.07),
+                speed: rand(0.00005, 0.00012),
+                rPhase: rand(0, Math.PI * 2),
+            });
+        }
 
-        const spawnRising = (): Ember => {
-            const spark = Math.random() < 0.06;
-            const bias = (Math.random() + Math.random() + Math.random()) / 3;
-            return makeEmber(bias * width, height + rand(0, 30), spark);
-        };
-
-        // Hammer strikes the anvil: a burst of sparks radiating up-and-out.
-        const strike = () => {
-            const sx = width * rand(0.4, 0.6);
-            const sy = height * rand(0.82, 0.95);
-            const count = Math.round(rand(16, 30));
-            for (let i = 0; i < count; i++) {
-                const ang = -Math.PI / 2 + rand(-1.15, 1.15); // fan upward
-                const sp = rand(2.5, 6.5);
-                embers.push(makeEmber(sx, sy, true, Math.cos(ang) * sp, Math.sin(ang) * sp));
-            }
-            flash = 1;
-        };
-
-        const drawGlow = () => {
-            const gy = height * 1.02;
-            const gr = Math.max(width, height) * 0.62;
-            const boost = flash * 0.18;
-            const glow = ctx.createRadialGradient(width / 2, gy, 0, width / 2, gy, gr);
-            glow.addColorStop(0, `rgba(255,96,24,${0.22 + boost})`);
-            glow.addColorStop(0.4, `rgba(214,58,12,${0.1 + boost * 0.5})`);
-            glow.addColorStop(1, 'rgba(120,20,0,0)');
-            ctx.fillStyle = glow;
-            ctx.fillRect(0, 0, width, height);
-        };
-
-        const drawEmber = (e: Ember) => {
-            const t = e.life / e.maxLife;
-            const envelope = Math.sin(Math.min(1, t * 3.2) * (Math.PI / 2)) * (1 - t);
-            const alpha = Math.max(0, envelope * (0.7 + 0.3 * Math.sin(e.flicker)));
-            if (alpha <= 0.001) return;
-            const heat = e.heat * (1 - t * 0.7);
-            const sprite = heat > 0.66 ? spriteHot : heat > 0.34 ? spriteMid : spriteCool;
-
-            // Streak for fast sparks.
-            if (e.spark) {
-                ctx.globalAlpha = alpha * 0.5;
-                ctx.strokeStyle = 'rgba(255,180,90,1)';
-                ctx.lineWidth = e.size * 0.9;
+        const drawLava = (elapsed: number) => {
+            // Gentle global breathing (~7s period).
+            const breathe = 0.6 + 0.4 * Math.sin(elapsed / 1100);
+            const minDim = Math.min(width, height);
+            ctx.globalCompositeOperation = 'lighter';
+            for (const b of blobs) {
+                const x = (b.bx + Math.sin(elapsed * b.speed + b.phase) * b.driftX) * width;
+                const y = (b.by + Math.cos(elapsed * b.speed * 0.8 + b.phase) * b.driftY) * height;
+                const r =
+                    b.r * minDim * (0.92 + 0.08 * Math.sin(elapsed * 0.0004 + b.rPhase)) *
+                    (0.85 + 0.25 * breathe);
+                const a = 0.05 + 0.09 * breathe; // subtle; mostly black
+                const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+                g.addColorStop(0, `rgba(168,30,14,${a})`);
+                g.addColorStop(0.45, `rgba(96,16,8,${a * 0.5})`);
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = g;
                 ctx.beginPath();
-                ctx.moveTo(e.px, e.py);
-                ctx.lineTo(e.x, e.y);
-                ctx.stroke();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.fill();
             }
-            const d = e.size * 7;
-            ctx.globalAlpha = alpha;
-            ctx.drawImage(sprite, e.x - d / 2, e.y - d / 2, d, d);
+        };
+
+        // --- Cursor lightning ----------------------------------------------
+        const trail: TrailPt[] = [];
+        const TRAIL_MS = 240;
+
+        // Fractal (midpoint-displacement) jagged path between two points.
+        const bolt = (x1: number, y1: number, x2: number, y2: number, disp: number) => {
+            const pts: [number, number][] = [[x1, y1]];
+            const rec = (ax: number, ay: number, bx: number, by: number, d: number) => {
+                if (d < 2.5) {
+                    pts.push([bx, by]);
+                    return;
+                }
+                const mx = (ax + bx) / 2 + (Math.random() - 0.5) * d;
+                const my = (ay + by) / 2 + (Math.random() - 0.5) * d;
+                rec(ax, ay, mx, my, d / 2);
+                rec(mx, my, bx, by, d / 2);
+            };
+            rec(x1, y1, x2, y2, disp);
+            return pts;
+        };
+
+        const strokePts = (pts: [number, number][]) => {
+            ctx.beginPath();
+            ctx.moveTo(pts[0]![0], pts[0]![1]);
+            for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i]![0], pts[i]![1]);
+            ctx.stroke();
+        };
+
+        const drawLightning = (now: number) => {
+            while (trail.length && now - trail[0]!.t > TRAIL_MS) trail.shift();
+            if (trail.length < 2) return;
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            for (let i = 1; i < trail.length; i++) {
+                const p0 = trail[i - 1]!;
+                const p1 = trail[i]!;
+                const alpha = Math.max(0, 1 - (now - p1.t) / TRAIL_MS);
+                if (alpha <= 0.02) continue;
+                const dx = p1.x - p0.x;
+                const dy = p1.y - p0.y;
+                const seg = Math.hypot(dx, dy);
+                const pts = bolt(p0.x, p0.y, p1.x, p1.y, Math.min(18, 6 + seg * 0.5));
+                // outer red glow
+                ctx.strokeStyle = `rgba(255,44,22,${alpha * 0.45})`;
+                ctx.lineWidth = 4.5;
+                strokePts(pts);
+                // bright core
+                ctx.strokeStyle = `rgba(255,180,150,${alpha})`;
+                ctx.lineWidth = 1.4;
+                strokePts(pts);
+                // occasional fork
+                if (Math.random() < 0.15 && pts.length > 2) {
+                    const k = (Math.random() * (pts.length - 1)) | 0;
+                    const bx = pts[k]![0] + rand(-24, 24);
+                    const by = pts[k]![1] + rand(-24, 24);
+                    const fork = bolt(pts[k]![0], pts[k]![1], bx, by, 12);
+                    ctx.strokeStyle = `rgba(255,90,50,${alpha * 0.6})`;
+                    ctx.lineWidth = 1;
+                    strokePts(fork);
+                }
+            }
         };
 
         const step = (now: number) => {
-            const dt = Math.min(50, now - last);
-            last = now;
-            if (flash > 0) flash = Math.max(0, flash - dt / 320);
-
             ctx.clearRect(0, 0, width, height);
+            drawLava(now - start);
+            if (!prefersReduced) drawLightning(now);
             ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
-            drawGlow();
-
-            // Hammer rhythm.
-            nextStrike -= dt;
-            if (nextStrike <= 0) {
-                strike();
-                nextStrike = rand(2600, 4800);
-            }
-
-            let toSpawn = Math.min(3, target - embers.length);
-            while (toSpawn-- > 0) embers.push(spawnRising());
-
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.lineCap = 'round';
-            for (let i = embers.length - 1; i >= 0; i--) {
-                const e = embers[i]!;
-                e.px = e.x;
-                e.py = e.y;
-                e.life++;
-                e.flicker += 0.18;
-                e.vy += 0.004;
-                e.vx += rand(-0.03, 0.03);
-
-                // Pointer stokes the forge: repel + brighten nearby embers.
-                if (pointer.active) {
-                    const dx = e.x - pointer.x;
-                    const dy = e.y - pointer.y;
-                    const d2 = dx * dx + dy * dy;
-                    const R = 150;
-                    if (d2 < R * R) {
-                        const d = Math.sqrt(d2) || 1;
-                        const f = (1 - d / R) * 0.9;
-                        e.vx += (dx / d) * f;
-                        e.vy += (dy / d) * f - 0.15; // also lift
-                        e.heat = Math.min(1, e.heat + f * 0.12);
-                    }
-                }
-
-                e.vx = Math.max(-1.4, Math.min(1.4, e.vx));
-                e.x += e.vx;
-                e.y += e.vy;
-                if (e.life >= e.maxLife || e.y < -20 || e.x < -30 || e.x > width + 30) {
-                    embers.splice(i, 1);
-                    continue;
-                }
-                drawEmber(e);
-            }
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
             raf = requestAnimationFrame(step);
         };
 
         const onMove = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
-            pointer.x = e.clientX - rect.left;
-            pointer.y = e.clientY - rect.top;
-            pointer.active = true;
-            // Occasionally throw a spark off the cursor as it moves.
-            if (Math.random() < 0.25) {
-                embers.push(
-                    makeEmber(pointer.x, pointer.y, true, rand(-1.2, 1.2), rand(-2.4, -0.4)),
-                );
-            }
-        };
-        const onLeave = () => {
-            pointer.active = false;
+            trail.push({ x: e.clientX - rect.left, y: e.clientY - rect.top, t: performance.now() });
+            if (trail.length > 40) trail.shift();
         };
 
         resize();
         window.addEventListener('resize', resize);
 
         if (prefersReduced) {
-            drawGlow();
-            ctx.globalCompositeOperation = 'lighter';
-            for (let i = 0; i < target; i++) {
-                const e = spawnRising();
-                e.y = rand(0, height);
-                e.life = rand(0, e.maxLife * 0.5);
-                drawEmber(e);
-            }
-            ctx.globalCompositeOperation = 'source-over';
+            drawLava(0);
         } else {
             window.addEventListener('mousemove', onMove);
-            window.addEventListener('mouseleave', onLeave);
             raf = requestAnimationFrame(step);
         }
 
@@ -253,7 +184,6 @@ export function ForgeBackground() {
             cancelAnimationFrame(raf);
             window.removeEventListener('resize', resize);
             window.removeEventListener('mousemove', onMove);
-            window.removeEventListener('mouseleave', onLeave);
         };
     }, []);
 
@@ -262,7 +192,7 @@ export function ForgeBackground() {
             className="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1.2, ease: 'easeOut', delay: 0.3 }}
+            transition={{ duration: 1.5, ease: 'easeOut', delay: 0.2 }}
         >
             <canvas ref={canvasRef} className="h-full w-full" />
         </motion.div>
