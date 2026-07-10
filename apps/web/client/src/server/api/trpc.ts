@@ -28,16 +28,36 @@ import { ZodError } from 'zod';
  *
  * @see https://trpc.io/docs/server/context
  */
+// bun's fetch intermittently returns an empty response body under concurrency,
+// which surfaces from supabase.auth.getUser() as "JSON Parse error: Unexpected
+// EOF" (JSC/bun phrasing). getUser() runs on every protected request, so that
+// transient failure was being misreported as UNAUTHORIZED — breaking login and
+// project creation at random. Retry the token validation a few times, but only
+// for transient fetch/parse failures (never for a genuine "session missing").
+const TRANSIENT_AUTH_ERROR = /JSON Parse error|Unexpected (EOF|end of JSON)|fetch failed|socket|ECONNRESET|terminated/i;
+
+async function getAuthUser(supabase: Awaited<ReturnType<typeof createClient>>) {
+    const MAX_ATTEMPTS = 4;
+    let lastError: { message: string } | null = null;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        const { data, error } = await supabase.auth.getUser();
+        if (!error) {
+            return data.user;
+        }
+        lastError = error;
+        if (!TRANSIENT_AUTH_ERROR.test(error.message)) {
+            break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)));
+    }
+
+    throw new TRPCError({ code: 'UNAUTHORIZED', message: lastError?.message ?? 'Unauthorized' });
+}
+
 export const createTRPCContext = async (opts: { headers: Headers }) => {
     const supabase = await createClient();
-    const {
-        data: { user },
-        error,
-    } = await supabase.auth.getUser();
-
-    if (error) {
-        throw new TRPCError({ code: 'UNAUTHORIZED', message: error.message });
-    }
+    const user = await getAuthUser(supabase);
 
     return {
         db,
