@@ -317,9 +317,28 @@ export function useChat({ conversationId, projectId, initialMessages }: UseChatP
                 }
             };
 
+            // Refresh the preview after an editing turn. The editor otherwise
+            // relies solely on the app's HMR, which doesn't cover structural
+            // changes (new fonts, layout, dependencies) in the embedded iframe -
+            // so the agent's build wouldn't show until a manual reload. Small
+            // delay lets the writes sync to the sandbox and the dev server
+            // recompile before we reload.
+            const reloadPreviewIfEdited = () => {
+                const editingModes: ChatType[] = [
+                    ChatType.EDIT,
+                    ChatType.CREATE,
+                    ChatType.FIX,
+                    ChatType.FORGE_PROPOSE,
+                ];
+                if (lastChatTypeRef.current && editingModes.includes(lastChatTypeRef.current)) {
+                    setTimeout(() => void editorEngine.frames.reloadAllViews(), 800);
+                }
+            };
+
             void cleanupContext();
             void applyCommit();
             void processNextQueuedMessage();
+            reloadPreviewIfEdited();
         }
     }, [finishReason, conversationId, queuedMessages.length, processNextInQueue]);
 
