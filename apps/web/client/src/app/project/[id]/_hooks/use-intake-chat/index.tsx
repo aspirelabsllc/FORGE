@@ -17,6 +17,14 @@ interface UseIntakeChatProps {
     setMessages: (messages: ChatMessage[]) => void;
 }
 
+/**
+ * A brand document to ingest: pasted/text-format content, or a PDF sent to
+ * Claude as a native document. Mirrors the `brandKit.ingestDoc` tRPC input.
+ */
+export type IngestDocInput =
+    | { kind: 'text'; text: string; filename?: string }
+    | { kind: 'pdf'; dataBase64: string; filename: string };
+
 const getAssistantMessage = (text: string, conversationId: string): ChatMessage => ({
     id: uuidv4(),
     role: 'assistant',
@@ -150,13 +158,13 @@ export function useIntakeChat({ conversationId, projectId, messages, setMessages
     );
 
     const ingestDoc = useCallback(
-        async (text: string): Promise<void> => {
+        async (doc: IngestDocInput): Promise<void> => {
             setIsIngesting(true);
             setIsStreaming(true);
             setError(undefined);
             try {
                 const brandKitId = await ensureBrandKitId();
-                const result = await api.brandKit.ingestDoc.mutate({ brandKitId, text });
+                const result = await api.brandKit.ingestDoc.mutate({ brandKitId, doc });
                 setDraft(result.draft);
                 setMessages(
                     jsonClone([

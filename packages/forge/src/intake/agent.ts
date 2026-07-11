@@ -58,7 +58,7 @@ export const runIntakeTurn = async ({
     let currentDraft = draft;
     const { model, providerOptions, headers, maxOutputTokens } = initModel({
         provider: LLMProvider.ANTHROPIC,
-        model: CLAUDE_MODELS.SONNET_5,
+        model: CLAUDE_MODELS.OPUS_4_8,
     });
 
     const messages: ModelMessage[] = history.map((m) => ({ role: m.role, content: m.content }));

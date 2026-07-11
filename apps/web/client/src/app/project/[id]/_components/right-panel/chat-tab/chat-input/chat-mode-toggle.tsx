@@ -85,26 +85,6 @@ export const ChatModeToggle = observer(({ chatMode, onChatModeChange, disabled =
                 </HoverOnlyTooltip>
             <DropdownMenuContent align="start" className="w-40">
                 <DropdownMenuItem
-                    onClick={() => onChatModeChange(ChatType.EDIT)}
-                    className={cn(
-                        'flex items-center gap-2 px-3 py-2',
-                        chatMode === ChatType.EDIT && 'bg-background-onlook'
-                    )}
-                >
-                    <Icons.Build className="w-4 h-4" />
-                    <span>Build</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    onClick={() => onChatModeChange(ChatType.ASK)}
-                    className={cn(
-                        'flex items-center gap-2 px-3 py-2',
-                        chatMode === ChatType.ASK && 'bg-background-onlook'
-                    )}
-                >
-                    <Icons.Ask className="w-4 h-4" />
-                    <span>Ask</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
                     onClick={() => onChatModeChange(ChatType.FORGE_INTAKE)}
                     className={cn(
                         'flex items-center gap-2 px-3 py-2',

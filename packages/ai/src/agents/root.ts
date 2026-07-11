@@ -89,7 +89,7 @@ export const repairToolCall = async ({ toolCall, tools, error }: { toolCall: Too
 
     const { model } = initModel({
         provider: LLMProvider.ANTHROPIC,
-        model: CLAUDE_MODELS.HAIKU_4_5,
+        model: CLAUDE_MODELS.SONNET_5,
     });
 
     const { object: repairedArgs } = await generateObject({

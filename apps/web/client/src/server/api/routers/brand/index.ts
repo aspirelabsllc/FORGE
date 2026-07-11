@@ -76,7 +76,21 @@ export const brandKitRouter = createTRPCRouter({
         .input(
             z.object({
                 brandKitId: z.string(),
-                text: z.string().min(1),
+                // Either pasted/text-format content, or a PDF handed to Claude as
+                // a native document. Word (.docx) is unsupported (Claude can't
+                // read it) - the UI directs those to PDF export.
+                doc: z.discriminatedUnion('kind', [
+                    z.object({
+                        kind: z.literal('text'),
+                        text: z.string().min(1),
+                        filename: z.string().optional(),
+                    }),
+                    z.object({
+                        kind: z.literal('pdf'),
+                        dataBase64: z.string().min(1),
+                        filename: z.string(),
+                    }),
+                ]),
             }),
         )
         .mutation(async ({ ctx, input }) => {
@@ -88,10 +102,14 @@ export const brandKitRouter = createTRPCRouter({
             }
 
             const draft = fromDbBrandKit(row);
-            const { draft: nextDraft, summary } = await ingestBrandDoc({ draft, docText: input.text });
+            const { draft: nextDraft, summary } = await ingestBrandDoc({ draft, doc: input.doc });
+            const ref =
+                input.doc.kind === 'pdf'
+                    ? input.doc.filename
+                    : (input.doc.filename ?? 'pasted-document');
             const withSource: typeof nextDraft = {
                 ...nextDraft,
-                sourceDocs: [...nextDraft.sourceDocs, { type: 'upload' as const, ref: 'pasted-document' }],
+                sourceDocs: [...nextDraft.sourceDocs, { type: 'upload' as const, ref }],
             };
 
             await ctx.db

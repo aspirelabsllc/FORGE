@@ -24,7 +24,7 @@ export class StateManager {
     branchTab: BranchTabValue | null = null;
     manageBranchId: string | null = null;
 
-    chatMode: ChatType = ChatType.EDIT;
+    chatMode: ChatType = ChatType.FORGE_INTAKE;
 
     constructor() {
         makeAutoObservable(this);

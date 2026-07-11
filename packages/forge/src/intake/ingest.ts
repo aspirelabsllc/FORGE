@@ -38,6 +38,20 @@ Only capture what the document explicitly supports - leave a field absent if the
 doesn't clearly express it. Do not invent positioning, tone, or objections that aren't there.
 Prefer the document's own words. Return concise values.`;
 
+const INGEST_USER_PROMPT =
+    'Extract the structured brand information from the attached brand document.';
+
+/**
+ * A brand document to ingest. Text formats (txt/html/markdown/pasted) arrive as
+ * plain text; PDFs are handed to the model as a native document (base64) so
+ * Claude reads them directly without us parsing the binary. Word docs are not
+ * supported here - Claude can't read .docx natively - so the UI asks users to
+ * export those as PDF.
+ */
+export type IngestDocInput =
+    | { kind: 'text'; text: string; filename?: string }
+    | { kind: 'pdf'; dataBase64: string; filename: string };
+
 const nonEmpty = (s: string | undefined): boolean => !!s?.trim();
 const hasItems = (a: unknown[] | undefined): boolean => !!a && a.length > 0;
 
@@ -48,22 +62,43 @@ const hasItems = (a: unknown[] | undefined): boolean => !!a && a.length > 0;
  */
 export const ingestBrandDoc = async ({
     draft,
-    docText,
+    doc,
 }: {
     draft: BrandKitDraft;
-    docText: string;
+    doc: IngestDocInput;
 }): Promise<{ draft: BrandKitDraft; summary: string }> => {
     const { model, providerOptions } = initModel({
         provider: LLMProvider.ANTHROPIC,
-        model: CLAUDE_MODELS.SONNET_5,
+        model: CLAUDE_MODELS.OPUS_4_8,
     });
+
+    // PDFs go to Claude as a native document block; text formats go as text.
+    const input =
+        doc.kind === 'pdf'
+            ? {
+                  messages: [
+                      {
+                          role: 'user' as const,
+                          content: [
+                              { type: 'text' as const, text: INGEST_USER_PROMPT },
+                              {
+                                  type: 'file' as const,
+                                  data: doc.dataBase64,
+                                  mediaType: 'application/pdf',
+                                  filename: doc.filename,
+                              },
+                          ],
+                      },
+                  ],
+              }
+            : { prompt: `Brand document:\n\n${doc.text.slice(0, MAX_DOC_CHARS)}` };
 
     const { object } = await generateObject({
         model,
         providerOptions,
         schema: brandDocExtraction,
         system: INGEST_SYSTEM_PROMPT,
-        prompt: `Brand document:\n\n${docText.slice(0, MAX_DOC_CHARS)}`,
+        ...input,
     });
 
     const strategy = { ...draft.strategy };

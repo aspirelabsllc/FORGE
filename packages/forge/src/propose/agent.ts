@@ -36,7 +36,7 @@ export const createForgeProposeStream = ({
 }) => {
     const { model, providerOptions, headers, maxOutputTokens } = initModel({
         provider: LLMProvider.ANTHROPIC,
-        model: CLAUDE_MODELS.SONNET_5,
+        model: CLAUDE_MODELS.OPUS_4_8,
     });
 
     return streamText({
