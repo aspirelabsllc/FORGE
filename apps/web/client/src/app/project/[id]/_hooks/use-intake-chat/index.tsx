@@ -133,17 +133,7 @@ export function useIntakeChat({ conversationId, projectId, messages, setMessages
                 setDraft(result.draft);
 
                 const outcome = result.outcome;
-                let text: string;
-                if (outcome.type === 'question') {
-                    text = outcome.question;
-                } else if (outcome.type === 'suggestion') {
-                    text = outcome.rationale ? `${outcome.idea}\n\n${outcome.rationale}` : outcome.idea;
-                    if (outcome.needsAsset) {
-                        text += `\n\n${outcome.assetDescription ?? 'Could you share a relevant image so I can work it in?'}`;
-                    }
-                } else {
-                    text = outcome.message;
-                }
+                const text = outcome.type === 'ready' ? outcome.message : outcome.text;
 
                 setMessages(jsonClone([...withUser, getAssistantMessage(text, conversationId)]));
             } catch (err) {
@@ -164,14 +154,19 @@ export function useIntakeChat({ conversationId, projectId, messages, setMessages
             setError(undefined);
             try {
                 const brandKitId = await ensureBrandKitId();
-                const result = await api.brandKit.ingestDoc.mutate({ brandKitId, doc });
+                // Transcript sent to the agent is everything before the upload
+                // marker; the server appends its own "uploaded document" note.
+                const history = toIntakeHistory(messagesRef.current);
+                const label = doc.kind === 'pdf' ? doc.filename : (doc.filename ?? 'brand document');
+                const uploadMsg = getUserChatMessageFromString(`📄 Uploaded ${label}`, [], conversationId);
+                const withUpload = [...messagesRef.current, uploadMsg];
+                setMessages(jsonClone(withUpload));
+
+                const result = await api.brandKit.ingestDoc.mutate({ brandKitId, doc, history });
                 setDraft(result.draft);
-                setMessages(
-                    jsonClone([
-                        ...messagesRef.current,
-                        getAssistantMessage(`${result.summary} What would you like to refine or add?`, conversationId),
-                    ]),
-                );
+                const outcome = result.outcome;
+                const text = outcome.type === 'ready' ? outcome.message : outcome.text;
+                setMessages(jsonClone([...withUpload, getAssistantMessage(text, conversationId)]));
             } catch (err) {
                 setError(err instanceof Error ? err : new Error(String(err)));
             } finally {

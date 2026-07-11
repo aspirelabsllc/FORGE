@@ -5,8 +5,6 @@ import {
     type BrandKitDraft,
 } from '@onlook/brand-schema';
 import { stepCountIs, streamText, type ModelMessage } from 'ai';
-import { AskUserTool } from '../tools/ask-user';
-import { ProposeIdeaTool } from '../tools/propose-idea';
 import { buildIntakeSystemPrompt } from './system-prompt';
 import { createUpdateFieldTool, UPDATE_BRAND_KIT_FIELD_TOOL_NAME } from './update-field-tool';
 
@@ -16,14 +14,7 @@ export interface IntakeTurnMessage {
 }
 
 export type ForgeIntakeOutcome =
-    | { type: 'question'; question: string; why: string; fieldPath: string }
-    | {
-          type: 'suggestion';
-          idea: string;
-          rationale: string;
-          needsAsset: boolean;
-          assetDescription?: string;
-      }
+    | { type: 'message'; text: string }
     | { type: 'ready'; message: string };
 
 export interface IntakeTurnResult {
@@ -32,11 +23,13 @@ export interface IntakeTurnResult {
 }
 
 /**
- * Runs exactly one bounded INTAKE turn: reads the checklist, lets Forge
- * optionally record a field update, then either ask one question, propose
- * one idea, or (if the checklist is already satisfied) report readiness.
- * One `streamText` call per turn, mirroring the `stepCountIs` pattern in
- * packages/ai/src/agents/root.ts.
+ * Runs one INTAKE turn as a real conversation. The agent reads the full
+ * transcript plus any uploaded brand documents (injected into the system prompt
+ * by `buildIntakeSystemPrompt`), records whatever fields it can via
+ * `update_brand_kit_field`, and replies in natural language. Unlike the earlier
+ * one-ask-per-turn design, it can record several fields and answer the founder's
+ * actual questions in the same turn - `update_brand_kit_field` has an `execute`,
+ * so the AI SDK keeps stepping until the agent writes its final message.
  */
 export const runIntakeTurn = async ({
     draft,
@@ -70,10 +63,9 @@ export const runIntakeTurn = async ({
         maxOutputTokens,
         system: buildIntakeSystemPrompt(currentDraft),
         messages,
-        stopWhen: stepCountIs(3),
+        // Enough steps to record several fields from a document, then reply.
+        stopWhen: stepCountIs(8),
         tools: {
-            ask_user: AskUserTool.getAITool(),
-            propose_idea: ProposeIdeaTool.getAITool(),
             [UPDATE_BRAND_KIT_FIELD_TOOL_NAME]: createUpdateFieldTool(
                 () => currentDraft,
                 (next) => {
@@ -84,48 +76,15 @@ export const runIntakeTurn = async ({
     });
 
     await result.consumeStream();
-    const toolCalls = await result.toolCalls;
+    const text = (await result.text).trim();
 
-    const askCall = toolCalls.find((c) => c.toolName === 'ask_user');
-    const proposeCall = toolCalls.find((c) => c.toolName === 'propose_idea');
-
-    if (askCall && askCall.toolName === 'ask_user') {
-        const input = askCall.input as { question: string; why: string; fieldPath: string };
-        return {
-            draft: currentDraft,
-            outcome: { type: 'question', question: input.question, why: input.why, fieldPath: input.fieldPath },
-        };
-    }
-
-    if (proposeCall && proposeCall.toolName === 'propose_idea') {
-        const input = proposeCall.input as {
-            idea: string;
-            rationale: string;
-            needsAsset: boolean;
-            assetDescription?: string;
-        };
-        return {
-            draft: currentDraft,
-            outcome: {
-                type: 'suggestion',
-                idea: input.idea,
-                rationale: input.rationale,
-                needsAsset: input.needsAsset,
-                assetDescription: input.assetDescription,
-            },
-        };
-    }
-
-    // Model recorded a field but didn't ask/propose - fall back to a direct
-    // nudge toward the next gap rather than leaving the turn ambiguous.
-    const text = await result.text;
     return {
         draft: currentDraft,
         outcome: {
-            type: 'question',
-            question: text || 'Could you tell me more about your brand?',
-            why: 'Forge did not call ask_user or propose_idea this turn.',
-            fieldPath: '',
+            type: 'message',
+            text:
+                text ||
+                "Tell me a bit more about your brand and I'll keep building this out.",
         },
     };
 };

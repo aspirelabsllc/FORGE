@@ -1,5 +1,5 @@
 import { brandKits, fromDbBrandKit, projects, toDbBrandKitUpdate } from '@onlook/db';
-import { ingestBrandDoc, runIntakeTurn } from '@onlook/forge';
+import { prepareDocContent, runIntakeTurn } from '@onlook/forge';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../../trpc';
@@ -91,6 +91,7 @@ export const brandKitRouter = createTRPCRouter({
                         filename: z.string(),
                     }),
                 ]),
+                history: z.array(intakeHistoryMessage),
             }),
         )
         .mutation(async ({ ctx, input }) => {
@@ -102,22 +103,34 @@ export const brandKitRouter = createTRPCRouter({
             }
 
             const draft = fromDbBrandKit(row);
-            const { draft: nextDraft, summary } = await ingestBrandDoc({ draft, doc: input.doc });
-            const ref =
-                input.doc.kind === 'pdf'
-                    ? input.doc.filename
-                    : (input.doc.filename ?? 'pasted-document');
-            const withSource: typeof nextDraft = {
-                ...nextDraft,
-                sourceDocs: [...nextDraft.sourceDocs, { type: 'upload' as const, ref }],
-            };
 
+            // Store the full document on the kit (no cropping, no lossy field
+            // extraction) so the intake agent can read and converse over it.
+            const { content, ref } = await prepareDocContent(input.doc);
+            const withDoc: typeof draft = {
+                ...draft,
+                sourceDocs: [...draft.sourceDocs, { type: 'upload' as const, ref, content }],
+            };
             await ctx.db
                 .update(brandKits)
-                .set(toDbBrandKitUpdate(withSource))
+                .set(toDbBrandKitUpdate(withDoc))
                 .where(eq(brandKits.id, input.brandKitId));
 
-            return { draft: withSource, summary };
+            // Run a turn so Forge reads the document, records what it finds, and
+            // responds conversationally - rather than a one-shot silent extract.
+            const result = await runIntakeTurn({
+                draft: withDoc,
+                history: [
+                    ...input.history,
+                    { role: 'user', content: `I've uploaded a brand document: ${ref}.` },
+                ],
+            });
+            await ctx.db
+                .update(brandKits)
+                .set(toDbBrandKitUpdate(result.draft))
+                .where(eq(brandKits.id, input.brandKitId));
+
+            return result;
         }),
 
     getForProject: protectedProcedure

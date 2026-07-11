@@ -9,6 +9,12 @@ export const sourceDocType = z.enum(SOURCE_DOC_TYPES);
 export const sourceDoc = z.object({
     type: sourceDocType,
     ref: z.string(),
+    /**
+     * Full text of the uploaded document (PDFs are transcribed to text first).
+     * Kept whole - not a lossy extraction - so the intake agent can read and
+     * converse over the actual document, not just a few pulled fields.
+     */
+    content: z.string().optional(),
 });
 export type SourceDoc = z.infer<typeof sourceDoc>;
 
