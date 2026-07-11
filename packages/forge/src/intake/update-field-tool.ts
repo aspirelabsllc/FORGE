@@ -47,6 +47,17 @@ export const updateBrandKitFieldParams = z.discriminatedUnion('fieldPath', [
 ]);
 export type UpdateBrandKitFieldParams = z.infer<typeof updateBrandKitFieldParams>;
 
+/**
+ * Anthropic requires a tool's `input_schema` to be a top-level object
+ * (`type: "object"`). A bare discriminated union compiles to `anyOf` with no
+ * top-level `type`, which the API rejects ("input_schema.type: Field required").
+ * So the tool wraps the union under a single `update` property; nested `anyOf`
+ * inside an object is fine.
+ */
+export const updateBrandKitFieldToolInput = z.object({
+    update: updateBrandKitFieldParams,
+});
+
 export const UPDATE_BRAND_KIT_FIELD_TOOL_NAME = 'update_brand_kit_field';
 
 /**
@@ -144,11 +155,11 @@ export const applyBrandKitFieldUpdate = (
 export const createUpdateFieldTool = (getDraft: () => BrandKitDraft, setDraft: (next: BrandKitDraft) => void) =>
     tool({
         description:
-            'Record a piece of information the user just gave you into the brand kit draft. Call this before asking the next question if the user\'s last message answered a checklist item.',
-        inputSchema: updateBrandKitFieldParams,
-        execute: async (params: UpdateBrandKitFieldParams) => {
-            const next = applyBrandKitFieldUpdate(getDraft(), params);
+            'Record a piece of information the user just gave you into the brand kit draft. Call this before asking the next question if the user\'s last message answered a checklist item. Pass the field under `update`.',
+        inputSchema: updateBrandKitFieldToolInput,
+        execute: async ({ update }: { update: UpdateBrandKitFieldParams }) => {
+            const next = applyBrandKitFieldUpdate(getDraft(), update);
             setDraft(next);
-            return { fieldPath: params.fieldPath, recorded: true };
+            return { fieldPath: update.fieldPath, recorded: true };
         },
     });
